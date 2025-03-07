@@ -10,19 +10,22 @@
 
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: #121212;
+            background-color: #1a1a1a;
             color: white;
             text-align: center;
             margin: 0;
             padding: 0;
             overflow: hidden;
+            position: relative;
         }
 
         header {
-            background: #1f1f1f;
+            background: #333;
             padding: 20px;
             font-size: 24px;
-            text-transform: uppercase;
+            color: #fff;
+            font-weight: 700;
+            text-shadow: 2px 2px 5px #000;
         }
 
         .audio-controls {
@@ -31,14 +34,14 @@
             left: 50%;
             transform: translate(-50%, -50%);
             display: flex;
-            flex-direction: row;
             align-items: center;
-            background: #333;
-            padding: 10px 20px;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
             border-radius: 10px;
         }
 
-        button {
+        .audio-controls button, .audio-controls input {
             background: #ff5722;
             color: white;
             border: none;
@@ -46,89 +49,80 @@
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
-            margin: 0 5px;
+            margin: 5px;
             transition: 0.3s;
         }
 
-        button:hover {
+        .audio-controls button:hover, .audio-controls input:hover {
             background: #e64a19;
         }
 
         input[type="range"] {
-            width: 150px;
+            width: 200px;
+            margin-top: 10px;
+        }
+
+        .audio-controls select {
             margin-left: 10px;
+            padding: 10px;
+            background: #333;
+            color: white;
+            border: none;
+        }
+
+        .record-image {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/a/a1/Record_player.svg');
+            background-size: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .visualizer-bar {
+            position: absolute;
+            bottom: 0;
+            width: 5px;
+            margin: 0 2px;
+            background: #000;
+            transition: height 0.1s;
+        }
+
+        .spark {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: spark-animation 0.5s ease-in-out infinite;
+        }
+
+        @keyframes spark-animation {
+            0% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) translateY(-10px);
+            }
+        }
+
+        .hidden {
+            display: none;
         }
 
         .visualizer {
             position: absolute;
             bottom: 0;
-            height: 10px;
             width: 100%;
+            height: 100px;
             display: flex;
-            justify-content: space-between;
-            margin: 0;
-            padding: 0;
-        }
-
-        .bar {
-            width: 4%;
-            height: 100%;
-            background: #121212;
-            transition: height 0.1s ease;
-        }
-
-        .image-container {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-            margin-top: -50px;
-        }
-
-        #recordImage {
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            border: 10px solid #ff5722;
-            transition: transform 0.1s ease-out;
-        }
-
-        .sparks {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-        }
-
-        .spark {
-            position: absolute;
-            background: white;
-            width: 2px;
-            height: 2px;
-            animation: sparkle 0.5s infinite;
-            pointer-events: none;
-        }
-
-        @keyframes sparkle {
-            0% {
-                transform: translateX(0) translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateX(20px) translateY(20px);
-                opacity: 0;
-            }
-        }
-
-        .retro {
-            background: #121212;
-            color: #ffffff;
+            justify-content: center;
         }
     </style>
 </head>
@@ -138,128 +132,120 @@
         <h1>JBL Speaker - by 4170</h1>
     </header>
 
-    <div class="image-container">
-        <img id="recordImage" src="record.png" alt="Record">
+    <div class="audio-controls">
+        <button id="playButton">Play</button>
+        <button id="pauseButton" class="hidden">Pause</button>
+        <input type="range" id="seekBar" value="0" min="0" step="1">
+        <input type="file" id="fileUpload" accept="audio/*">
+        <select id="fileSelect"></select>
     </div>
 
-    <div class="audio-controls">
-        <button id="playPauseButton">Play</button>
-        <button id="pauseButton">Pause</button>
-        <input type="range" id="seekBar" value="0" min="0" step="1">
-        <input type="file" id="fileUpload">
-        <select id="fileList"></select>
-    </div>
+    <div class="record-image"></div>
+
+    <div class="visualizer"></div>
 
     <audio id="audio" src="sound.mp3"></audio>
 
-    <div class="visualizer" id="visualizer"></div>
-    <div class="sparks" id="sparks"></div>
-
     <script>
         const audio = document.getElementById('audio');
-        const playPauseButton = document.getElementById('playPauseButton');
+        const playButton = document.getElementById('playButton');
         const pauseButton = document.getElementById('pauseButton');
         const seekBar = document.getElementById('seekBar');
         const fileUpload = document.getElementById('fileUpload');
-        const fileList = document.getElementById('fileList');
-        const recordImage = document.getElementById('recordImage');
-        const sparks = document.getElementById('sparks');
-        const visualizer = document.getElementById('visualizer');
-
-        let audioContext, analyser, dataArray, bufferLength;
-
-        playPauseButton.addEventListener('click', playAudio);
-        pauseButton.addEventListener('click', pauseAudio);
-        seekBar.addEventListener('input', () => { audio.currentTime = seekBar.value; });
-        fileUpload.addEventListener('change', handleFileUpload);
-
-        function playAudio() {
-            if (audio.paused) {
-                audio.play();
-                playPauseButton.textContent = 'Pause';
-                recordImage.style.transform = 'rotate(360deg)';
-                sparks.style.opacity = 1;
-            } else {
-                pauseAudio();
-            }
-        }
-
-        function pauseAudio() {
-            audio.pause();
-            playPauseButton.textContent = 'Play';
-            recordImage.style.transform = 'rotate(0deg)';
-            sparks.style.opacity = 0;
-        }
-
-        audio.addEventListener('timeupdate', function() {
-            seekBar.max = audio.duration;
-            seekBar.value = audio.currentTime;
-        });
-
-        function handleFileUpload() {
-            const file = fileUpload.files[0];
-            if (file) {
-                const objectURL = URL.createObjectURL(file);
-                audio.src = objectURL;
-                addToFileList(file.name);
-            }
-        }
-
-        function addToFileList(fileName) {
-            const option = document.createElement('option');
-            option.value = fileName;
-            option.textContent = fileName;
-            fileList.appendChild(option);
-        }
-
-        fileList.addEventListener('change', function() {
-            audio.src = URL.createObjectURL(fileUpload.files[fileList.selectedIndex]);
-            audio.play();
-        });
-
-        // Setup audio visualizer
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
-
-        const source = audioContext.createMediaElementSource(audio);
+        const fileSelect = document.getElementById('fileSelect');
+        const recordImage = document.querySelector('.record-image');
+        const visualizerContainer = document.querySelector('.visualizer');
+        let audioFiles = ["sound.mp3"];
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let analyser = audioContext.createAnalyser();
+        let source = audioContext.createMediaElementSource(audio);
         source.connect(analyser);
         analyser.connect(audioContext.destination);
+        analyser.fftSize = 128;
+        let bufferLength = analyser.frequencyBinCount;
+        let dataArray = new Uint8Array(bufferLength);
 
-        function animateVisualizer() {
-            requestAnimationFrame(animateVisualizer);
-            analyser.getByteFrequencyData(dataArray);
-            visualizer.innerHTML = '';
-
-            dataArray.forEach((value, index) => {
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                bar.style.height = `${(value / 255) * 100}%`;
-                bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
-                visualizer.appendChild(bar);
-            });
+        function addFileOption(fileName) {
+            let option = document.createElement('option');
+            option.textContent = fileName;
+            option.value = fileName;
+            fileSelect.appendChild(option);
         }
 
-        audio.onplay = () => {
-            if (audioContext.state === 'suspended') audioContext.resume();
-            animateVisualizer();
-        };
-
-        function createSparks() {
-            for (let i = 0; i < 50; i++) {
-                const spark = document.createElement('div');
-                spark.classList.add('spark');
-                spark.style.left = `${Math.random() * 100}vw`;
-                spark.style.top = `${Math.random() * 100}vh`;
-                sparks.appendChild(spark);
-                setTimeout(() => { spark.remove(); }, 500);
+        function updateVisualizer() {
+            analyser.getByteFrequencyData(dataArray);
+            for (let i = 0; i < bufferLength; i++) {
+                let bar = visualizerContainer.children[i];
+                let value = dataArray[i];
+                let height = value * 0.8;
+                bar.style.height = `${height}px`;
+                let color = `rgb(${value}, ${value}, ${value})`;
+                bar.style.backgroundColor = color;
             }
         }
 
-        audio.onplay = createSparks;
+        function setupVisualizer() {
+            for (let i = 0; i < 20; i++) {
+                let bar = document.createElement('div');
+                bar.classList.add('visualizer-bar');
+                visualizerContainer.appendChild(bar);
+            }
+        }
 
+        playButton.addEventListener('click', () => {
+            audio.play();
+            playButton.classList.add('hidden');
+            pauseButton.classList.remove('hidden');
+            recordImage.style.transform = 'rotate(360deg)';
+        });
+
+        pauseButton.addEventListener('click', () => {
+            audio.pause();
+            playButton.classList.remove('hidden');
+            pauseButton.classList.add('hidden');
+            recordImage.style.transform = 'rotate(0deg)';
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            seekBar.max = audio.duration;
+            seekBar.value = audio.currentTime;
+            updateVisualizer();
+        });
+
+        seekBar.addEventListener('input', () => {
+            audio.currentTime = seekBar.value;
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            let file = e.target.files[0];
+            if (file) {
+                let url = URL.createObjectURL(file);
+                audio.src = url;
+                audioFiles.push(file.name);
+                addFileOption(file.name);
+                fileSelect.value = file.name;
+                playButton.classList.remove('hidden');
+                pauseButton.classList.add('hidden');
+            }
+        });
+
+        fileSelect.addEventListener('change', (e) => {
+            let selectedFile = e.target.value;
+            if (selectedFile) {
+                audio.src = selectedFile === 'sound.mp3' ? 'sound.mp3' : selectedFile;
+                audio.play();
+                playButton.classList.add('hidden');
+                pauseButton.classList.remove('hidden');
+            }
+        });
+
+        audio.onplay = () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        };
+
+        setupVisualizer();
     </script>
 
 </body>
