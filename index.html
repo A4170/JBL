@@ -71,7 +71,7 @@
         }
 
         .bar {
-            width: 4%;
+            width: 5%;
             height: 100%;
             background: #121212;
             transition: height 0.1s ease;
@@ -91,7 +91,7 @@
             height: 300px;
             border-radius: 50%;
             border: 10px solid #ff5722;
-            transition: transform 0.1s ease-out;
+            transition: transform 0.1s linear;
         }
 
         .sparks {
@@ -169,13 +169,13 @@
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
-                recordImage.style.transform = 'rotate(360deg)';
+                recordImage.style.animation = 'rotate 4s linear infinite';
                 sparks.style.opacity = 1;
                 createVisualizer();
             } else {
                 audio.pause();
                 playPauseButton.textContent = 'Play';
-                recordImage.style.transform = 'rotate(0deg)';
+                recordImage.style.animation = 'none';
                 sparks.style.opacity = 0;
             }
         }
@@ -212,7 +212,7 @@
                 dataArray.forEach((value, index) => {
                     const bar = document.createElement('div');
                     bar.classList.add('bar');
-                    bar.style.height = `${(value / 255) * 100}%`;
+                    bar.style.height = `${(value / 255) * 100}%`; // Ensure bars grow upwards
                     bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
                     visualizer.appendChild(bar);
                 });
@@ -223,7 +223,7 @@
 
         // Create sparks when the audio is playing
         function createSparks() {
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 10; i++) {
                 const spark = document.createElement('div');
                 spark.classList.add('spark');
                 spark.style.left = `${Math.random() * 100}vw`;
@@ -235,7 +235,11 @@
 
         audio.onplay = () => {
             if (audioContext.state === 'suspended') audioContext.resume();
-            createSparks();
+            setInterval(createSparks, 200); // Keep sparks generating while playing
+        };
+
+        audio.onpause = () => {
+            clearInterval(createSparks);
         };
 
     </script>
