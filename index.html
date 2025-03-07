@@ -191,7 +191,7 @@
             analyser.getByteFrequencyData(dataArray);
             dataArray.forEach((value, index) => {
                 if (bars[index]) {
-                    bars[index].style.height = `${value / 8}px`;
+                    bars[index].style.height = `${value / 25}px`;
                     bars[index].style.background = colors[index % colors.length];
                 }
             });
