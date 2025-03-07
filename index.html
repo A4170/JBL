@@ -3,264 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JBL Speaker - by 4170</title>
-
+    <title>Audio Visualizer</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #121212;
-            color: white;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #recordImage { width: 100px; height: 100px; }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        header {
-            background: #1f1f1f;
-            padding: 20px;
-            font-size: 24px;
-            text-transform: uppercase;
-        }
-
-        .audio-controls {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            background: #333;
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-
-        button {
-            background: #ff5722;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin: 0 5px;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #e64a19;
-        }
-
-        input[type="range"] {
-            width: 150px;
-            margin-left: 10px;
-        }
-
-        .visualizer {
-            position: absolute;
-            bottom: 0;
-            height: 10px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            margin: 0;
-            padding: 0;
-        }
-
-        .bar {
-            width: 4%;
-            height: 100%;
-            background: #121212;
-            transition: height 0.1s ease;
-        }
-
-        .image-container {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-            margin-top: -50px;
-        }
-
-        #recordImage {
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            border: 10px solid #ff5722;
-            transition: transform 0.1s ease-out;
-        }
-
-        .sparks {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-        }
-
-        .spark {
-            position: absolute;
-            background: white;
-            width: 2px;
-            height: 2px;
-            animation: sparkle 0.5s infinite;
-            pointer-events: none;
-        }
-
-        @keyframes sparkle {
-            0% {
-                transform: translateX(0) translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateX(20px) translateY(20px);
-                opacity: 0;
-            }
-        }
-
-        .retro {
-            background: #121212;
-            color: #ffffff;
-        }
+        .spinning { animation: spin 2s linear infinite; }
+        canvas { display: block; margin: auto; }
     </style>
 </head>
 <body>
-
-    <header>
-        <h1>JBL Speaker - by 4170</h1>
-    </header>
-
-    <div class="image-container">
-        <img id="recordImage" src="record.png" alt="Record">
-    </div>
-
-    <div class="audio-controls">
-        <button id="playPauseButton">Play</button>
-        <button id="pauseButton">Pause</button>
-        <input type="range" id="seekBar" value="0" min="0" step="1">
-        <input type="file" id="fileUpload">
-        <select id="fileList"></select>
-    </div>
-
-    <audio id="audio" src="sound.mp3"></audio>
-
-    <div class="visualizer" id="visualizer"></div>
-    <div class="sparks" id="sparks"></div>
+    <h1>Audio Visualizer</h1>
+    <input type="file" id="fileUpload" accept="audio/*">
+    <select id="fileList"></select>
+    <button id="playPauseButton">Play</button>
+    <img id="recordImage" src="assets/record.png" alt="Record">
+    <canvas id="visualizer"></canvas>
+    <div id="sparks" style="opacity: 0;">✨✨✨</div>
+    <audio id="audio"></audio>
 
     <script>
         const audio = document.getElementById('audio');
         const playPauseButton = document.getElementById('playPauseButton');
-        const pauseButton = document.getElementById('pauseButton');
-        const seekBar = document.getElementById('seekBar');
+        const recordImage = document.getElementById('recordImage');
         const fileUpload = document.getElementById('fileUpload');
         const fileList = document.getElementById('fileList');
-        const recordImage = document.getElementById('recordImage');
-        const sparks = document.getElementById('sparks');
         const visualizer = document.getElementById('visualizer');
+        const sparks = document.getElementById('sparks');
+        const ctx = visualizer.getContext('2d');
+        let audioContext, analyzer, dataArray, bufferLength;
 
-        let audioContext, analyser, dataArray, bufferLength;
-
-        playPauseButton.addEventListener('click', playAudio);
-        pauseButton.addEventListener('click', pauseAudio);
-        seekBar.addEventListener('input', () => { audio.currentTime = seekBar.value; });
         fileUpload.addEventListener('change', handleFileUpload);
-
-        function playAudio() {
-            if (audio.paused) {
-                audio.play();
-                playPauseButton.textContent = 'Pause';
-                recordImage.style.transform = 'rotate(360deg)';
-                sparks.style.opacity = 1;
-            } else {
-                pauseAudio();
-            }
-        }
-
-        function pauseAudio() {
-            audio.pause();
-            playPauseButton.textContent = 'Play';
-            recordImage.style.transform = 'rotate(0deg)';
-            sparks.style.opacity = 0;
-        }
-
-        audio.addEventListener('timeupdate', function() {
-            seekBar.max = audio.duration;
-            seekBar.value = audio.currentTime;
+        fileList.addEventListener('change', function () {
+            audio.src = fileList.value;
+            audio.play();
         });
+        playPauseButton.addEventListener('click', toggleAudio);
 
         function handleFileUpload() {
             const file = fileUpload.files[0];
             if (file) {
-                const objectURL = URL.createObjectURL(file);
-                audio.src = objectURL;
-                addToFileList(file.name);
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    audio.src = e.target.result;
+                    addToFileList(file.name, e.target.result);
+                };
+                reader.readAsDataURL(file);
             }
         }
 
-        function addToFileList(fileName) {
+        function addToFileList(fileName, fileSrc) {
             const option = document.createElement('option');
-            option.value = fileName;
+            option.value = fileSrc;
             option.textContent = fileName;
             fileList.appendChild(option);
         }
 
-        fileList.addEventListener('change', function() {
-            audio.src = URL.createObjectURL(fileUpload.files[fileList.selectedIndex]);
-            audio.play();
-        });
-
-        // Setup audio visualizer
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
-
-        const source = audioContext.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-
-        function animateVisualizer() {
-            requestAnimationFrame(animateVisualizer);
-            analyser.getByteFrequencyData(dataArray);
-            visualizer.innerHTML = '';
-
-            dataArray.forEach((value, index) => {
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                bar.style.height = `${(value / 255) * 100}%`;
-                bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
-                visualizer.appendChild(bar);
-            });
-        }
-
-        audio.onplay = () => {
-            if (audioContext.state === 'suspended') audioContext.resume();
-            animateVisualizer();
-        };
-
-        function createSparks() {
-            for (let i = 0; i < 50; i++) {
-                const spark = document.createElement('div');
-                spark.classList.add('spark');
-                spark.style.left = `${Math.random() * 100}vw`;
-                spark.style.top = `${Math.random() * 100}vh`;
-                sparks.appendChild(spark);
-                setTimeout(() => { spark.remove(); }, 500);
+        function toggleAudio() {
+            if (audio.paused) {
+                audio.play();
+                playPauseButton.textContent = 'Pause';
+                recordImage.classList.add('spinning');
+                sparks.style.opacity = 1;
+                initAudioVisualizer();
+            } else {
+                audio.pause();
+                playPauseButton.textContent = 'Play';
+                recordImage.classList.remove('spinning');
+                sparks.style.opacity = 0;
             }
         }
 
-        audio.onplay = createSparks;
+        function initAudioVisualizer() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyzer = audioContext.createAnalyser();
+                const source = audioContext.createMediaElementSource(audio);
+                source.connect(analyzer);
+                analyzer.connect(audioContext.destination);
+                analyzer.fftSize = 256;
+                bufferLength = analyzer.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+            }
+            animateVisualizer();
+        }
 
+        function animateVisualizer() {
+            requestAnimationFrame(animateVisualizer);
+            analyzer.getByteFrequencyData(dataArray);
+            ctx.clearRect(0, 0, visualizer.width, visualizer.height);
+            ctx.fillStyle = 'rgb(0, 0, 255)';
+            const barWidth = (visualizer.width / bufferLength) * 2.5;
+            let x = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = dataArray[i] / 2;
+                ctx.fillRect(x, visualizer.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
     </script>
-
 </body>
 </html>
