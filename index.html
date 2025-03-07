@@ -62,7 +62,7 @@
         .visualizer {
             position: absolute;
             bottom: 0;
-            height: 10px;
+            height: 100px; /* Changed to be a bit taller */
             width: 100%;
             display: flex;
             justify-content: space-between;
@@ -71,8 +71,8 @@
         }
 
         .bar {
-            width: 5%;
-            height: 100%;
+            width: 4%; /* Make bars smaller */
+            height: 0%; /* Start from 0 height */
             background: #121212;
             transition: height 0.1s ease;
         }
@@ -161,6 +161,7 @@
         const visualizer = document.getElementById('visualizer');
 
         let audioContext, analyser, dataArray, bufferLength;
+        let isPlaying = false;
 
         // Handle play/pause functionality
         playPauseButton.addEventListener('click', toggleAudio);
@@ -169,13 +170,13 @@
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
-                recordImage.style.animation = 'rotate 4s linear infinite';
+                recordImage.style.animation = 'rotate 4s linear infinite'; // Continuous spinning
                 sparks.style.opacity = 1;
                 createVisualizer();
             } else {
                 audio.pause();
                 playPauseButton.textContent = 'Play';
-                recordImage.style.animation = 'none';
+                recordImage.style.animation = 'none'; // Stop spinning
                 sparks.style.opacity = 0;
             }
         }
@@ -212,7 +213,7 @@
                 dataArray.forEach((value, index) => {
                     const bar = document.createElement('div');
                     bar.classList.add('bar');
-                    bar.style.height = `${(value / 255) * 100}%`; // Ensure bars grow upwards
+                    bar.style.height = `${(value / 255) * 100}%`; // Bars grow upwards now
                     bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
                     visualizer.appendChild(bar);
                 });
