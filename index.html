@@ -180,7 +180,7 @@
         const source = audioContext.createMediaElementSource(audio);
         source.connect(analyser);
         analyser.connect(audioContext.destination);
-        analyser.fftSize = 202;
+        analyser.fftSize = 32;
 
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
@@ -191,7 +191,7 @@
             analyser.getByteFrequencyData(dataArray);
             dataArray.forEach((value, index) => {
                 if (bars[index]) {
-                    bars[index].style.height = `${value / 2}px`;
+                    bars[index].style.height = `${value / 8}px`;
                     bars[index].style.background = colors[index % colors.length];
                 }
             });
