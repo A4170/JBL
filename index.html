@@ -3,64 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Player</title>
+    <title>JBL Speaker - by 4170</title>
+
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        #recordImage { width: 100px; height: 100px; transition: transform 0.5s linear; }
-        .spinning { animation: spin 2s linear infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+            color: #f5f5f5;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        header {
+            background: #111;
+            padding: 20px;
+            font-size: 24px;
+            text-shadow: 0px 0px 5px #ffcc00;
+        }
+
+        .record-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px;
+            height: 150px;
+        }
+
+        .record {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: url('record.png') no-repeat center center;
+            background-size: cover;
+            transition: transform 0.5s linear;
+        }
+
+        .spinning {
+            animation: spin 2s linear infinite;
+        }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .audio-controls {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        button {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 5px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #e64a19;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            margin-top: 10px;
+        }
+
+        .visualizer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+        }
+
+        .bar {
+            width: 8%;
+            height: 10px;
+            background: red;
+            transition: height 0.1s ease, background 0.2s;
+        }
+
+        .spark {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: sparkle 1s linear infinite;
+        }
+
+        @keyframes sparkle {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <h1>Simple Audio Player</h1>
-    <input type="file" id="fileUpload" accept="audio/*">
-    <select id="fileList"></select>
-    <button id="playPauseButton">Play</button>
-    <img id="recordImage" src="record.png" alt="Record">
+
+    <header>
+        <h1>JBL Speaker - by 4170</h1>
+    </header>
+
+    <div class="record-container">
+        <div class="record" id="record"></div>
+    </div>
+
+    <div class="audio-controls">
+        <button id="playPauseButton">Play</button>
+        <input type="range" id="seekBar" value="0" min="0" step="1">
+    </div>
+
     <audio id="audio" src="sound.mp3"></audio>
+
+    <div class="visualizer" id="visualizer">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div>
+    </div>
 
     <script>
         const audio = document.getElementById('audio');
         const playPauseButton = document.getElementById('playPauseButton');
-        const recordImage = document.getElementById('recordImage');
-        const fileUpload = document.getElementById('fileUpload');
-        const fileList = document.getElementById('fileList');
+        const seekBar = document.getElementById('seekBar');
+        const record = document.getElementById('record');
+        const bars = document.querySelectorAll('.bar');
+        const visualizer = document.getElementById('visualizer');
 
-        fileUpload.addEventListener('change', function () {
-            const file = fileUpload.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                audio.src = url;
-                addToFileList(file.name, url);
-            }
-        });
-
-        function addToFileList(fileName, fileSrc) {
-            const option = document.createElement('option');
-            option.value = fileSrc;
-            option.textContent = fileName;
-            fileList.appendChild(option);
-        }
-
-        fileList.addEventListener('change', function () {
-            audio.src = fileList.value;
-            audio.play();
-        });
-
-        playPauseButton.addEventListener('click', function () {
+        playPauseButton.addEventListener('click', function() {
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
-                recordImage.classList.add('spinning');
+                record.classList.add('spinning');
+                generateSparks();
             } else {
                 audio.pause();
                 playPauseButton.textContent = 'Play';
-                recordImage.classList.remove('spinning');
+                record.classList.remove('spinning');
+                removeSparks();
             }
         });
+
+        audio.addEventListener('timeupdate', function() {
+            seekBar.max = audio.duration;
+            seekBar.value = audio.currentTime;
+        });
+
+        seekBar.addEventListener('input', function() {
+            audio.currentTime = seekBar.value;
+        });
+
+        // Visualizer Effect
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 32;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'cyan', 'magenta', 'white'];
+
+        function animateVisualizer() {
+            requestAnimationFrame(animateVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+            dataArray.forEach((value, index) => {
+                if (bars[index]) {
+                    bars[index].style.height = `${value / 2}px`;
+                    bars[index].style.background = colors[index % colors.length];
+                }
+            });
+        }
+
+        audio.onplay = () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            animateVisualizer();
+        };
+
+        // Spark Effect
+        function generateSparks() {
+            for (let i = 0; i < 20; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.left = `${Math.random() * 100}vw`;
+                spark.style.top = `${Math.random() * 100}vh`;
+                spark.style.animationDuration = `${Math.random() * 2 + 1}s`;
+                document.body.appendChild(spark);
+            }
+        }
+
+        function removeSparks() {
+            document.querySelectorAll('.spark').forEach(spark => spark.remove());
+        }
     </script>
+
 </body>
 </html>
