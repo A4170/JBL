@@ -6,11 +6,12 @@
     <title>JBL Speaker - by 4170</title>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
         body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #121212;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e, #0f3460);
             color: white;
             text-align: center;
             margin: 0;
@@ -19,133 +20,93 @@
         }
 
         header {
-            background: #1f1f1f;
+            font-family: 'Press Start 2P', cursive;
+            background: #ff0080;
+            color: white;
             padding: 20px;
-            font-size: 24px;
-            text-transform: uppercase;
+            font-size: 20px;
+            text-shadow: 2px 2px 5px #000;
+            border-bottom: 5px solid #ffbf00;
         }
 
         .audio-controls {
             position: absolute;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            right: 10%;
+            transform: translateY(-50%);
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             align-items: center;
-            background: #333;
-            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
             border-radius: 10px;
+            border: 2px solid #ffbf00;
         }
 
         button {
-            background: #ff5722;
+            background: #ff0080;
             color: white;
             border: none;
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
-            margin: 0 5px;
+            margin: 5px;
             transition: 0.3s;
         }
 
         button:hover {
-            background: #e64a19;
+            background: #ffbf00;
         }
 
         input[type="range"] {
             width: 150px;
-            margin-left: 10px;
+            margin-top: 10px;
+            accent-color: #ffbf00;
         }
 
-        .image-container {
+        /* Rotating Record */
+        .record-container {
             position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-            margin-top: -50px;
+            top: 50%;
+            left: 10%;
+            transform: translateY(-50%);
         }
 
-        #recordImage {
-            width: 300px;
-            height: 300px;
+        .record {
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            border: 10px solid #ff5722;
-            transition: transform 0.1s linear;
+            background: url('record.png') no-repeat center/cover;
+            transition: transform 0.2s ease-out;
         }
 
-        .sparks {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
-        }
-
-        .spark {
-            position: absolute;
-            background: white;
-            width: 2px;
-            height: 2px;
-            animation: sparkle 0.5s infinite;
-            pointer-events: none;
-        }
-
-        @keyframes sparkle {
-            0% {
-                transform: translateX(0) translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateX(20px) translateY(20px);
-                opacity: 0;
-            }
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .visualizer {
+        /* Visualizer */
+        .visualizer-container {
             position: absolute;
             bottom: 0;
-            left: 0;
-            height: 100px; /* Adjust height to make it more prominent */
-            width: 100%;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            justify-content: space-between;
-            margin: 0;
-            padding: 0;
+            gap: 5px;
         }
 
         .bar {
-            width: 4%;
-            height: 0%; /* Start from 0 height */
-            background: #121212;
-            transition: height 0.1s ease;
-        }
-
-        .retro {
-            background: #121212;
-            color: #ffffff;
+            width: 15px;
+            height: 10px;
+            background: red;
+            transition: height 0.1s, background 0.3s;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>JBL Speaker - by 4170</h1>
+        JBL Speaker - by 4170
     </header>
 
-    <div class="image-container">
-        <img id="recordImage" src="record.png" alt="Record">
+    <div class="record-container">
+        <div class="record" id="record"></div>
     </div>
 
     <div class="audio-controls">
@@ -155,100 +116,84 @@
 
     <audio id="audio" src="sound.mp3"></audio>
 
-    <div class="visualizer" id="visualizer"></div>
-    <div class="sparks" id="sparks"></div>
+    <div class="visualizer-container" id="visualizer"></div>
 
     <script>
         const audio = document.getElementById('audio');
         const playPauseButton = document.getElementById('playPauseButton');
         const seekBar = document.getElementById('seekBar');
-        const recordImage = document.getElementById('recordImage');
-        const sparks = document.getElementById('sparks');
+        const record = document.getElementById('record');
         const visualizer = document.getElementById('visualizer');
 
-        let audioContext, analyser, dataArray, bufferLength;
-        let isPlaying = false;
-
-        // Handle play/pause functionality
-        playPauseButton.addEventListener('click', toggleAudio);
-
-        function toggleAudio() {
+        // Play/Pause and Record Rotation
+        playPauseButton.addEventListener('click', function() {
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
-                recordImage.style.animation = 'rotate 4s linear infinite'; // Continuous spinning
-                sparks.style.opacity = 1;
-                createVisualizer();
+                record.style.animation = "spin 3s linear infinite";
             } else {
                 audio.pause();
                 playPauseButton.textContent = 'Play';
-                recordImage.style.animation = 'none'; // Stop spinning
-                sparks.style.opacity = 0;
+                record.style.animation = "";
             }
-        }
+        });
 
-        // Update the seekbar as audio plays
+        // Seek Bar Update
         audio.addEventListener('timeupdate', function() {
             seekBar.max = audio.duration;
             seekBar.value = audio.currentTime;
         });
 
-        seekBar.addEventListener('input', () => { 
-            audio.currentTime = seekBar.value; 
+        seekBar.addEventListener('input', function() {
+            audio.currentTime = seekBar.value;
         });
 
-        // Setup audio visualizer
-        function createVisualizer() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 256;
-                bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
+        // Visualizer Setup
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 32;
 
-                const source = audioContext.createMediaElementSource(audio);
-                source.connect(analyser);
-                analyser.connect(audioContext.destination);
-            }
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
 
-            function animateVisualizer() {
-                requestAnimationFrame(animateVisualizer);
-                analyser.getByteFrequencyData(dataArray);
-                visualizer.innerHTML = '';
-
-                dataArray.forEach((value, index) => {
-                    const bar = document.createElement('div');
-                    bar.classList.add('bar');
-                    bar.style.height = `${(value / 255) * 100}%`; // Bars now grow upwards from the bottom
-                    bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
-                    visualizer.appendChild(bar);
-                });
-            }
-
-            animateVisualizer();
+        // Create 10 bars
+        for (let i = 0; i < 10; i++) {
+            let bar = document.createElement('div');
+            bar.classList.add('bar');
+            visualizer.appendChild(bar);
         }
+        const bars = document.querySelectorAll('.bar');
 
-        // Create sparks when the audio is playing
-        function createSparks() {
-            for (let i = 0; i < 10; i++) {
-                const spark = document.createElement('div');
-                spark.classList.add('spark');
-                spark.style.left = `${Math.random() * 100}vw`;
-                spark.style.top = `${Math.random() * 100}vh`;
-                sparks.appendChild(spark);
-                setTimeout(() => { spark.remove(); }, 500);
-            }
+        function animateVisualizer() {
+            requestAnimationFrame(animateVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+
+            bars.forEach((bar, index) => {
+                let value = dataArray[index * 2] / 2; // Scale down height
+                bar.style.height = `${value}px`;
+
+                // Rainbow colors
+                bar.style.background = `hsl(${(index * 36) + (value / 2)}, 100%, 50%)`;
+            });
         }
 
         audio.onplay = () => {
-            if (audioContext.state === 'suspended') audioContext.resume();
-            setInterval(createSparks, 200); // Keep sparks generating while playing
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            animateVisualizer();
         };
 
-        audio.onpause = () => {
-            clearInterval(createSparks);
-        };
-
+        // Record spinning animation
+        document.head.insertAdjacentHTML("beforeend", `<style>
+            @keyframes spin { 
+                from { transform: rotate(0deg); } 
+                to { transform: rotate(360deg); } 
+            }
+        </style>`);
     </script>
 
 </body>
