@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tony's JBL Speaker Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+        }
+        h1 {
+            font-size: 45px;
+            text-shadow: 0px 0px 8px #ccc;
+            font-family: 'Press Start 2P', cursive;
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 25px;
+            text-shadow: 0px 0px 6px #888;
+        }
+        p {
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        a {
+            color: #fff;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            transition: 0.3s ease;
+        }
+        a:hover {
+            background: rgba(255, 255, 255, 0.8);
+            color: #000;
+            text-shadow: 0px 0px 10px #000;
+        }
+        img {
+            display: block;
+            margin: 20px auto;
+            border: 4px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(255, 255, 255, 0.8);
+        }
+        hr {
+            border: 2px solid #fff;
+            margin: 30px auto;
+            width: 80%;
+            opacity: 0.7;
+        }
+        .audio-container {
+            margin-top: 20px;
+        }
+        .audio-button {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+        .audio-button:hover {
+            background: #000;
+            color: #fff;
+            text-shadow: 0px 0px 8px #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <hr>
+    <h1>HOW TO BUILD A NUCLEAR REACTOR IN YOUR GARAGE AT 3AM!!!</h1>
+    <hr>
+
+    <img alt="A secret reactor blueprint" 
+         src="your-image-url-here.jpg" 
+         width="240" height="190">
+    
+    <hr>
+
+    <p>
+        "If you ever feel down, remember that having a good day is a one-in-two chance, just like gambling. 
+        You're always gambling for a good day, and once you realize you're gambling, you'll be happy again. 
+        Because gambling is awesome."
+    </p>
+
+    <hr>
+
+    <h2>
+        <a href="index2.html">Click me to go to the requirements page</a>
+    </h2>
+
+    <hr>
+
+    <!-- Audio Player -->
+    <div class="audio-container">
+        <audio id="audio-player" loop>
+            <source src="your-audio-file-url.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <button class="audio-button" onclick="toggleAudio()">Play Music</button>
+    </div>
+
+    <script>
+        let audioPlayer = document.getElementById("audio-player");
+        let audioButton = document.querySelector(".audio-button");
+        let isPlaying = false;
+
+        function toggleAudio() {
+            if (!isPlaying) {
+                audioPlayer.play();
+                audioButton.textContent = "Pause Music";
+                isPlaying = true;
+            } else {
+                audioPlayer.pause();
+                audioButton.textContent = "Play Music";
+                isPlaying = false;
+            }
+        }
+    </script>
+
+</body>
+</html>
