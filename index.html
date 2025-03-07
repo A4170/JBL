@@ -171,6 +171,7 @@
                 playPauseButton.textContent = 'Pause';
                 recordImage.style.transform = 'rotate(360deg)';
                 sparks.style.opacity = 1;
+                createVisualizer();
             } else {
                 audio.pause();
                 playPauseButton.textContent = 'Play';
@@ -190,34 +191,35 @@
         });
 
         // Setup audio visualizer
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
+        function createVisualizer() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
 
-        const source = audioContext.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
+                const source = audioContext.createMediaElementSource(audio);
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+            }
 
-        function animateVisualizer() {
-            requestAnimationFrame(animateVisualizer);
-            analyser.getByteFrequencyData(dataArray);
-            visualizer.innerHTML = '';
+            function animateVisualizer() {
+                requestAnimationFrame(animateVisualizer);
+                analyser.getByteFrequencyData(dataArray);
+                visualizer.innerHTML = '';
 
-            dataArray.forEach((value, index) => {
-                const bar = document.createElement('div');
-                bar.classList.add('bar');
-                bar.style.height = `${(value / 255) * 100}%`;
-                bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
-                visualizer.appendChild(bar);
-            });
-        }
+                dataArray.forEach((value, index) => {
+                    const bar = document.createElement('div');
+                    bar.classList.add('bar');
+                    bar.style.height = `${(value / 255) * 100}%`;
+                    bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
+                    visualizer.appendChild(bar);
+                });
+            }
 
-        audio.onplay = () => {
-            if (audioContext.state === 'suspended') audioContext.resume();
             animateVisualizer();
-        };
+        }
 
         // Create sparks when the audio is playing
         function createSparks() {
@@ -231,7 +233,10 @@
             }
         }
 
-        audio.onplay = createSparks;
+        audio.onplay = () => {
+            if (audioContext.state === 'suspended') audioContext.resume();
+            createSparks();
+        };
 
     </script>
 
