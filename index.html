@@ -144,7 +144,6 @@
 
     <div class="audio-controls">
         <button id="playPauseButton">Play</button>
-        <button id="pauseButton">Pause</button>
         <input type="range" id="seekBar" value="0" min="0" step="1">
     </div>
 
@@ -156,7 +155,6 @@
     <script>
         const audio = document.getElementById('audio');
         const playPauseButton = document.getElementById('playPauseButton');
-        const pauseButton = document.getElementById('pauseButton');
         const seekBar = document.getElementById('seekBar');
         const recordImage = document.getElementById('recordImage');
         const sparks = document.getElementById('sparks');
@@ -164,26 +162,21 @@
 
         let audioContext, analyser, dataArray, bufferLength;
 
-        playPauseButton.addEventListener('click', playAudio);
-        pauseButton.addEventListener('click', pauseAudio);
+        playPauseButton.addEventListener('click', playPauseAudio);
         seekBar.addEventListener('input', () => { audio.currentTime = seekBar.value; });
 
-        function playAudio() {
+        function playPauseAudio() {
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
                 recordImage.style.transform = 'rotate(360deg)';
                 sparks.style.opacity = 1;
             } else {
-                pauseAudio();
+                audio.pause();
+                playPauseButton.textContent = 'Play';
+                recordImage.style.transform = 'rotate(0deg)';
+                sparks.style.opacity = 0;
             }
-        }
-
-        function pauseAudio() {
-            audio.pause();
-            playPauseButton.textContent = 'Play';
-            recordImage.style.transform = 'rotate(0deg)';
-            sparks.style.opacity = 0;
         }
 
         audio.addEventListener('timeupdate', function() {
