@@ -10,7 +10,7 @@
 
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: #1a1a1a;
+            background-color: #101010;
             color: white;
             text-align: center;
             margin: 0;
@@ -20,28 +20,28 @@
         }
 
         header {
-            background: #333;
+            background: #1f1f1f;
             padding: 20px;
-            font-size: 24px;
-            color: #fff;
-            font-weight: 700;
-            text-shadow: 2px 2px 5px #000;
+            font-size: 30px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #e6e6e6;
         }
 
         .audio-controls {
             position: absolute;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            right: 10%;
+            transform: translateY(-50%);
             display: flex;
             align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
+            background: #333;
+            padding: 15px 30px;
             border-radius: 10px;
         }
 
-        .audio-controls button, .audio-controls input {
+        button {
             background: #ff5722;
             color: white;
             border: none;
@@ -53,7 +53,7 @@
             transition: 0.3s;
         }
 
-        .audio-controls button:hover, .audio-controls input:hover {
+        button:hover {
             background: #e64a19;
         }
 
@@ -62,190 +62,178 @@
             margin-top: 10px;
         }
 
-        .audio-controls select {
-            margin-left: 10px;
-            padding: 10px;
-            background: #333;
-            color: white;
-            border: none;
+        .record {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: url('record.png') center center no-repeat;
+            background-size: cover;
+            border-radius: 50%;
+            animation: spin 0.4s linear infinite;
+            opacity: 0;
         }
 
-        .record-image {
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .visualizer-container {
             position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 200px;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/a/a1/Record_player.svg');
-            background-size: cover;
-            transition: transform 0.5s ease;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            margin-bottom: 10px;
         }
 
         .visualizer-bar {
-            position: absolute;
-            bottom: 0;
-            width: 5px;
-            margin: 0 2px;
-            background: #000;
-            transition: height 0.1s;
+            width: 4%;
+            height: 10px;
+            background: black;
+            transition: all 0.1s;
         }
 
         .spark {
             position: absolute;
-            width: 5px;
-            height: 5px;
-            background-color: white;
+            background: white;
+            width: 2px;
+            height: 2px;
             border-radius: 50%;
             opacity: 0;
-            animation: spark-animation 0.5s ease-in-out infinite;
+            animation: spark-animation 1s infinite;
         }
 
         @keyframes spark-animation {
-            0% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-            100% {
-                opacity: 0;
-                transform: scale(0) translateY(-10px);
-            }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .visualizer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 100px;
-            display: flex;
-            justify-content: center;
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            50% { opacity: 0.7; transform: translateY(-10px) scale(1.5); }
+            100% { opacity: 0; transform: translateY(0) scale(2); }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>JBL Speaker - by 4170</h1>
+        JBL Speaker - by 4170
     </header>
 
     <div class="audio-controls">
-        <button id="playButton">Play</button>
-        <button id="pauseButton" class="hidden">Pause</button>
+        <button id="playPauseButton">Play</button>
+        <button id="pauseButton">Pause</button>
         <input type="range" id="seekBar" value="0" min="0" step="1">
-        <input type="file" id="fileUpload" accept="audio/*">
-        <select id="fileSelect"></select>
     </div>
-
-    <div class="record-image"></div>
-
-    <div class="visualizer"></div>
 
     <audio id="audio" src="sound.mp3"></audio>
 
+    <div class="record" id="record"></div>
+
+    <div class="visualizer-container" id="visualizer-container">
+        <!-- Visualizer Bars will be generated dynamically -->
+    </div>
+
     <script>
         const audio = document.getElementById('audio');
-        const playButton = document.getElementById('playButton');
+        const playPauseButton = document.getElementById('playPauseButton');
         const pauseButton = document.getElementById('pauseButton');
         const seekBar = document.getElementById('seekBar');
-        const fileUpload = document.getElementById('fileUpload');
-        const fileSelect = document.getElementById('fileSelect');
-        const recordImage = document.querySelector('.record-image');
-        const visualizerContainer = document.querySelector('.visualizer');
-        let audioFiles = ["sound.mp3"];
-        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        let analyser = audioContext.createAnalyser();
-        let source = audioContext.createMediaElementSource(audio);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-        analyser.fftSize = 128;
-        let bufferLength = analyser.frequencyBinCount;
-        let dataArray = new Uint8Array(bufferLength);
+        const record = document.getElementById('record');
+        const visualizerContainer = document.getElementById('visualizer-container');
+        let sparks = [];
 
-        function addFileOption(fileName) {
-            let option = document.createElement('option');
-            option.textContent = fileName;
-            option.value = fileName;
-            fileSelect.appendChild(option);
+        // Create 20 visualizer bars
+        for (let i = 0; i < 20; i++) {
+            let bar = document.createElement('div');
+            bar.classList.add('visualizer-bar');
+            visualizerContainer.appendChild(bar);
         }
 
-        function updateVisualizer() {
-            analyser.getByteFrequencyData(dataArray);
-            for (let i = 0; i < bufferLength; i++) {
-                let bar = visualizerContainer.children[i];
-                let value = dataArray[i];
-                let height = value * 0.8;
-                bar.style.height = `${height}px`;
-                let color = `rgb(${value}, ${value}, ${value})`;
-                bar.style.backgroundColor = color;
+        const visualizerBars = document.querySelectorAll('.visualizer-bar');
+
+        // Play/Pause button
+        playPauseButton.addEventListener('click', function() {
+            if (audio.paused) {
+                audio.play();
+                playPauseButton.textContent = 'Pause';
+                record.style.animation = 'spin 1s linear infinite';
+                record.style.opacity = 1;
+            } else {
+                audio.pause();
+                playPauseButton.textContent = 'Play';
+                record.style.animation = 'none';
+                record.style.opacity = 0;
             }
-        }
-
-        function setupVisualizer() {
-            for (let i = 0; i < 20; i++) {
-                let bar = document.createElement('div');
-                bar.classList.add('visualizer-bar');
-                visualizerContainer.appendChild(bar);
-            }
-        }
-
-        playButton.addEventListener('click', () => {
-            audio.play();
-            playButton.classList.add('hidden');
-            pauseButton.classList.remove('hidden');
-            recordImage.style.transform = 'rotate(360deg)';
         });
 
-        pauseButton.addEventListener('click', () => {
+        // Pause button
+        pauseButton.addEventListener('click', function() {
             audio.pause();
-            playButton.classList.remove('hidden');
-            pauseButton.classList.add('hidden');
-            recordImage.style.transform = 'rotate(0deg)';
+            playPauseButton.textContent = 'Play';
+            record.style.animation = 'none';
+            record.style.opacity = 0;
         });
 
-        audio.addEventListener('timeupdate', () => {
+        // Update the time bar
+        audio.addEventListener('timeupdate', function() {
             seekBar.max = audio.duration;
             seekBar.value = audio.currentTime;
-            updateVisualizer();
         });
 
-        seekBar.addEventListener('input', () => {
+        seekBar.addEventListener('input', function() {
             audio.currentTime = seekBar.value;
         });
 
-        fileUpload.addEventListener('change', (e) => {
-            let file = e.target.files[0];
-            if (file) {
-                let url = URL.createObjectURL(file);
-                audio.src = url;
-                audioFiles.push(file.name);
-                addFileOption(file.name);
-                fileSelect.value = file.name;
-                playButton.classList.remove('hidden');
-                pauseButton.classList.add('hidden');
-            }
-        });
+        // Web Audio API for Visualizer
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 64;
 
-        fileSelect.addEventListener('change', (e) => {
-            let selectedFile = e.target.value;
-            if (selectedFile) {
-                audio.src = selectedFile === 'sound.mp3' ? 'sound.mp3' : selectedFile;
-                audio.play();
-                playButton.classList.add('hidden');
-                pauseButton.classList.remove('hidden');
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function animateVisualizer() {
+            requestAnimationFrame(animateVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+            for (let i = 0; i < 20; i++) {
+                const value = dataArray[i] || 0;
+                const scale = (value / 255) * 100;
+                visualizerBars[i].style.height = `${scale}px`;
+                visualizerBars[i].style.backgroundColor = `rgb(${255 - value}, ${value}, ${value})`;  // Black to white effect
             }
-        });
+        }
 
         audio.onplay = () => {
             if (audioContext.state === 'suspended') {
                 audioContext.resume();
             }
+            animateVisualizer();
+            spawnSparks();
         };
 
-        setupVisualizer();
+        // Spark animation
+        function spawnSparks() {
+            if (audio.paused) return;
+
+            let spark = document.createElement('div');
+            spark.classList.add('spark');
+            spark.style.left = `${Math.random() * 100}%`;
+            spark.style.top = `${Math.random() * 100}%`;
+            document.body.appendChild(spark);
+            sparks.push(spark);
+
+            setTimeout(() => {
+                spark.remove();
+                sparks = sparks.filter(s => s !== spark);
+            }, 1000);
+        }
+
+        setInterval(spawnSparks, 100); // Trigger sparks while playing
     </script>
 
 </body>
