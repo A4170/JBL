@@ -3,27 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Visualizer</title>
+    <title>Audio Player</title>
     <style>
         body { text-align: center; font-family: Arial, sans-serif; }
-        #recordImage { width: 100px; height: 100px; }
+        #recordImage { width: 100px; height: 100px; transition: transform 0.5s linear; }
+        .spinning { animation: spin 2s linear infinite; }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .spinning { animation: spin 2s linear infinite; }
-        canvas { display: block; margin: auto; }
     </style>
 </head>
 <body>
-    <h1>Audio Visualizer</h1>
+    <h1>Simple Audio Player</h1>
     <input type="file" id="fileUpload" accept="audio/*">
     <select id="fileList"></select>
     <button id="playPauseButton">Play</button>
-    <img id="recordImage" src="assets/record.png" alt="Record">
-    <canvas id="visualizer"></canvas>
-    <div id="sparks" style="opacity: 0;">✨✨✨</div>
-    <audio id="audio"></audio>
+    <img id="recordImage" src="record.png" alt="Record">
+    <audio id="audio" src="sound.mp3"></audio>
 
     <script>
         const audio = document.getElementById('audio');
@@ -31,29 +28,15 @@
         const recordImage = document.getElementById('recordImage');
         const fileUpload = document.getElementById('fileUpload');
         const fileList = document.getElementById('fileList');
-        const visualizer = document.getElementById('visualizer');
-        const sparks = document.getElementById('sparks');
-        const ctx = visualizer.getContext('2d');
-        let audioContext, analyzer, dataArray, bufferLength;
 
-        fileUpload.addEventListener('change', handleFileUpload);
-        fileList.addEventListener('change', function () {
-            audio.src = fileList.value;
-            audio.play();
-        });
-        playPauseButton.addEventListener('click', toggleAudio);
-
-        function handleFileUpload() {
+        fileUpload.addEventListener('change', function () {
             const file = fileUpload.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    audio.src = e.target.result;
-                    addToFileList(file.name, e.target.result);
-                };
-                reader.readAsDataURL(file);
+                const url = URL.createObjectURL(file);
+                audio.src = url;
+                addToFileList(file.name, url);
             }
-        }
+        });
 
         function addToFileList(fileName, fileSrc) {
             const option = document.createElement('option');
@@ -62,48 +45,22 @@
             fileList.appendChild(option);
         }
 
-        function toggleAudio() {
+        fileList.addEventListener('change', function () {
+            audio.src = fileList.value;
+            audio.play();
+        });
+
+        playPauseButton.addEventListener('click', function () {
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
                 recordImage.classList.add('spinning');
-                sparks.style.opacity = 1;
-                initAudioVisualizer();
             } else {
                 audio.pause();
                 playPauseButton.textContent = 'Play';
                 recordImage.classList.remove('spinning');
-                sparks.style.opacity = 0;
             }
-        }
-
-        function initAudioVisualizer() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyzer = audioContext.createAnalyser();
-                const source = audioContext.createMediaElementSource(audio);
-                source.connect(analyzer);
-                analyzer.connect(audioContext.destination);
-                analyzer.fftSize = 256;
-                bufferLength = analyzer.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
-            }
-            animateVisualizer();
-        }
-
-        function animateVisualizer() {
-            requestAnimationFrame(animateVisualizer);
-            analyzer.getByteFrequencyData(dataArray);
-            ctx.clearRect(0, 0, visualizer.width, visualizer.height);
-            ctx.fillStyle = 'rgb(0, 0, 255)';
-            const barWidth = (visualizer.width / bufferLength) * 2.5;
-            let x = 0;
-            for (let i = 0; i < bufferLength; i++) {
-                const barHeight = dataArray[i] / 2;
-                ctx.fillRect(x, visualizer.height - barHeight, barWidth, barHeight);
-                x += barWidth + 1;
-            }
-        }
+        });
     </script>
 </body>
 </html>
