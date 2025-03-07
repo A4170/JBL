@@ -162,10 +162,10 @@
 
         let audioContext, analyser, dataArray, bufferLength;
 
-        playPauseButton.addEventListener('click', playPauseAudio);
-        seekBar.addEventListener('input', () => { audio.currentTime = seekBar.value; });
+        // Handle play/pause functionality
+        playPauseButton.addEventListener('click', toggleAudio);
 
-        function playPauseAudio() {
+        function toggleAudio() {
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
@@ -179,9 +179,14 @@
             }
         }
 
+        // Update the seekbar as audio plays
         audio.addEventListener('timeupdate', function() {
             seekBar.max = audio.duration;
             seekBar.value = audio.currentTime;
+        });
+
+        seekBar.addEventListener('input', () => { 
+            audio.currentTime = seekBar.value; 
         });
 
         // Setup audio visualizer
@@ -214,6 +219,7 @@
             animateVisualizer();
         };
 
+        // Create sparks when the audio is playing
         function createSparks() {
             for (let i = 0; i < 50; i++) {
                 const spark = document.createElement('div');
