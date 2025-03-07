@@ -6,12 +6,12 @@
     <title>JBL Speaker - by 4170</title>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
         body {
-            font-family: 'Press Start 2P', cursive;
-            background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
-            color: #f5f5f5;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #121212;
+            color: white;
             text-align: center;
             margin: 0;
             padding: 0;
@@ -19,49 +19,22 @@
         }
 
         header {
-            background: #111;
+            background: #1f1f1f;
             padding: 20px;
             font-size: 24px;
-            text-shadow: 0px 0px 5px #ffcc00;
-        }
-
-        .record-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 150px;
-            height: 150px;
-        }
-
-        .record {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: url('record.png') no-repeat center center;
-            background-size: cover;
-            transition: transform 0.5s linear;
-        }
-
-        .spinning {
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            text-transform: uppercase;
         }
 
         .audio-controls {
             position: absolute;
-            bottom: 100px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             background: #333;
-            padding: 20px;
+            padding: 10px 20px;
             border-radius: 10px;
         }
 
@@ -73,7 +46,7 @@
             font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
-            margin: 5px;
+            margin: 0 5px;
             transition: 0.3s;
         }
 
@@ -83,39 +56,79 @@
 
         input[type="range"] {
             width: 150px;
-            margin-top: 10px;
+            margin-left: 10px;
         }
 
         .visualizer {
             position: absolute;
             bottom: 0;
+            height: 10px;
             width: 100%;
-            height: 100px;
             display: flex;
-            justify-content: space-around;
-            align-items: flex-end;
+            justify-content: space-between;
+            margin: 0;
+            padding: 0;
         }
 
         .bar {
-            width: 8%;
-            height: 10px;
-            background: red;
-            transition: height 0.1s ease, background 0.2s;
+            width: 4%;
+            height: 100%;
+            background: #121212;
+            transition: height 0.1s ease;
+        }
+
+        .image-container {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+            margin-top: -50px;
+        }
+
+        #recordImage {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 10px solid #ff5722;
+            transition: transform 0.1s ease-out;
+        }
+
+        .sparks {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
         }
 
         .spark {
             position: absolute;
-            width: 5px;
-            height: 5px;
             background: white;
-            border-radius: 50%;
-            opacity: 0;
-            animation: sparkle 1s linear infinite;
+            width: 2px;
+            height: 2px;
+            animation: sparkle 0.5s infinite;
+            pointer-events: none;
         }
 
         @keyframes sparkle {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+            0% {
+                transform: translateX(0) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(20px) translateY(20px);
+                opacity: 0;
+            }
+        }
+
+        .retro {
+            background: #121212;
+            color: #ffffff;
         }
     </style>
 </head>
@@ -125,100 +138,128 @@
         <h1>JBL Speaker - by 4170</h1>
     </header>
 
-    <div class="record-container">
-        <div class="record" id="record"></div>
+    <div class="image-container">
+        <img id="recordImage" src="record.png" alt="Record">
     </div>
 
     <div class="audio-controls">
         <button id="playPauseButton">Play</button>
+        <button id="pauseButton">Pause</button>
         <input type="range" id="seekBar" value="0" min="0" step="1">
+        <input type="file" id="fileUpload">
+        <select id="fileList"></select>
     </div>
 
     <audio id="audio" src="sound.mp3"></audio>
 
-    <div class="visualizer" id="visualizer">
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-        <div class="bar"></div>
-    </div>
+    <div class="visualizer" id="visualizer"></div>
+    <div class="sparks" id="sparks"></div>
 
     <script>
         const audio = document.getElementById('audio');
         const playPauseButton = document.getElementById('playPauseButton');
+        const pauseButton = document.getElementById('pauseButton');
         const seekBar = document.getElementById('seekBar');
-        const record = document.getElementById('record');
-        const bars = document.querySelectorAll('.bar');
+        const fileUpload = document.getElementById('fileUpload');
+        const fileList = document.getElementById('fileList');
+        const recordImage = document.getElementById('recordImage');
+        const sparks = document.getElementById('sparks');
         const visualizer = document.getElementById('visualizer');
 
-        playPauseButton.addEventListener('click', function() {
+        let audioContext, analyser, dataArray, bufferLength;
+
+        playPauseButton.addEventListener('click', playAudio);
+        pauseButton.addEventListener('click', pauseAudio);
+        seekBar.addEventListener('input', () => { audio.currentTime = seekBar.value; });
+        fileUpload.addEventListener('change', handleFileUpload);
+
+        function playAudio() {
             if (audio.paused) {
                 audio.play();
                 playPauseButton.textContent = 'Pause';
-                record.classList.add('spinning');
-                generateSparks();
+                recordImage.style.transform = 'rotate(360deg)';
+                sparks.style.opacity = 1;
             } else {
-                audio.pause();
-                playPauseButton.textContent = 'Play';
-                record.classList.remove('spinning');
-                removeSparks();
+                pauseAudio();
             }
-        });
+        }
+
+        function pauseAudio() {
+            audio.pause();
+            playPauseButton.textContent = 'Play';
+            recordImage.style.transform = 'rotate(0deg)';
+            sparks.style.opacity = 0;
+        }
 
         audio.addEventListener('timeupdate', function() {
             seekBar.max = audio.duration;
             seekBar.value = audio.currentTime;
         });
 
-        seekBar.addEventListener('input', function() {
-            audio.currentTime = seekBar.value;
+        function handleFileUpload() {
+            const file = fileUpload.files[0];
+            if (file) {
+                const objectURL = URL.createObjectURL(file);
+                audio.src = objectURL;
+                addToFileList(file.name);
+            }
+        }
+
+        function addToFileList(fileName) {
+            const option = document.createElement('option');
+            option.value = fileName;
+            option.textContent = fileName;
+            fileList.appendChild(option);
+        }
+
+        fileList.addEventListener('change', function() {
+            audio.src = URL.createObjectURL(fileUpload.files[fileList.selectedIndex]);
+            audio.play();
         });
 
-        // Visualizer Effect
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
+        // Setup audio visualizer
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        bufferLength = analyser.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+
         const source = audioContext.createMediaElementSource(audio);
         source.connect(analyser);
         analyser.connect(audioContext.destination);
-        analyser.fftSize = 32;
-
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'cyan', 'magenta', 'white'];
 
         function animateVisualizer() {
             requestAnimationFrame(animateVisualizer);
             analyser.getByteFrequencyData(dataArray);
+            visualizer.innerHTML = '';
+
             dataArray.forEach((value, index) => {
-                if (bars[index]) {
-                    bars[index].style.height = `${value / 2}px`;
-                    bars[index].style.background = colors[index % colors.length];
-                }
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = `${(value / 255) * 100}%`;
+                bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
+                visualizer.appendChild(bar);
             });
         }
 
         audio.onplay = () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
+            if (audioContext.state === 'suspended') audioContext.resume();
             animateVisualizer();
         };
 
-        // Spark Effect
-        function generateSparks() {
-            for (let i = 0; i < 20; i++) {
+        function createSparks() {
+            for (let i = 0; i < 50; i++) {
                 const spark = document.createElement('div');
-                spark.className = 'spark';
+                spark.classList.add('spark');
                 spark.style.left = `${Math.random() * 100}vw`;
                 spark.style.top = `${Math.random() * 100}vh`;
-                spark.style.animationDuration = `${Math.random() * 2 + 1}s`;
-                document.body.appendChild(spark);
+                sparks.appendChild(spark);
+                setTimeout(() => { spark.remove(); }, 500);
             }
         }
 
-        function removeSparks() {
-            document.querySelectorAll('.spark').forEach(spark => spark.remove());
-        }
+        audio.onplay = createSparks;
+
     </script>
 
 </body>
