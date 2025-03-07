@@ -62,7 +62,7 @@
         .visualizer {
             position: absolute;
             bottom: 0;
-            height: 100px; /* Changed to be a bit taller */
+            height: 100px; /* Adjust height to make it more prominent */
             width: 100%;
             display: flex;
             justify-content: space-between;
@@ -71,7 +71,7 @@
         }
 
         .bar {
-            width: 4%; /* Make bars smaller */
+            width: 4%;
             height: 0%; /* Start from 0 height */
             background: #121212;
             transition: height 0.1s ease;
@@ -124,6 +124,11 @@
                 transform: translateX(20px) translateY(20px);
                 opacity: 0;
             }
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .retro {
@@ -213,7 +218,7 @@
                 dataArray.forEach((value, index) => {
                     const bar = document.createElement('div');
                     bar.classList.add('bar');
-                    bar.style.height = `${(value / 255) * 100}%`; // Bars grow upwards now
+                    bar.style.height = `${(value / 255) * 100}%`; // Bars now grow upwards
                     bar.style.backgroundColor = `rgb(${value}, ${255 - value}, ${value})`;
                     visualizer.appendChild(bar);
                 });
