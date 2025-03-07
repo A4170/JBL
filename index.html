@@ -15,6 +15,7 @@
             text-align: center;
             margin: 0;
             padding: 0;
+            overflow: hidden;
         }
 
         header {
@@ -23,23 +24,55 @@
             font-size: 24px;
         }
 
-        button {
+        .audio-controls {
             position: absolute;
             top: 50%;
             right: 10%;
             transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        button {
             background: #ff5722;
             color: white;
             border: none;
-            padding: 15px 25px;
-            font-size: 18px;
+            padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
             border-radius: 5px;
+            margin: 5px;
             transition: 0.3s;
         }
 
         button:hover {
             background: #e64a19;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            margin-top: 10px;
+        }
+
+        .visualizer {
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 100vh;
+            background: linear-gradient(to top, #ff5722, transparent);
+            opacity: 0.7;
+        }
+
+        .left-bar {
+            left: 5%;
+        }
+
+        .right-bar {
+            right: 5%;
         }
     </style>
 </head>
@@ -49,14 +82,69 @@
         <h1>JBL Speaker - by 4170</h1>
     </header>
 
-    <button id="playButton">Play Sound</button>
+    <div class="audio-controls">
+        <button id="playPauseButton">Play</button>
+        <input type="range" id="seekBar" value="0" min="0" step="1">
+    </div>
+
     <audio id="audio" src="sound.mp3"></audio>
 
+    <div class="visualizer left-bar"></div>
+    <div class="visualizer right-bar"></div>
+
     <script>
-        document.getElementById('playButton').addEventListener('click', function() {
-            let audio = document.getElementById('audio');
-            audio.play();
+        const audio = document.getElementById('audio');
+        const playPauseButton = document.getElementById('playPauseButton');
+        const seekBar = document.getElementById('seekBar');
+        const visualizerBars = document.querySelectorAll('.visualizer');
+
+        playPauseButton.addEventListener('click', function() {
+            if (audio.paused) {
+                audio.play();
+                playPauseButton.textContent = 'Pause';
+            } else {
+                audio.pause();
+                playPauseButton.textContent = 'Play';
+            }
         });
+
+        audio.addEventListener('timeupdate', function() {
+            seekBar.max = audio.duration;
+            seekBar.value = audio.currentTime;
+        });
+
+        seekBar.addEventListener('input', function() {
+            audio.currentTime = seekBar.value;
+        });
+
+        // Simple Visualizer Effect
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audio);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyser.fftSize = 64;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        function animateVisualizer() {
+            requestAnimationFrame(animateVisualizer);
+            analyser.getByteFrequencyData(dataArray);
+            const avgFreq = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+            const scale = Math.max(10, avgFreq / 2);
+
+            visualizerBars.forEach(bar => {
+                bar.style.height = `${scale}vh`;
+            });
+        }
+
+        audio.onplay = () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            animateVisualizer();
+        };
     </script>
 
 </body>
